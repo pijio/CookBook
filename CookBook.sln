@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CookBookAPI", "CookBookAPI\CookBookAPI.csproj", "{B514119B-246A-4E58-98DF-5B6F68D3F218}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CookBook.API", "CookBook.API\CookBook.API.csproj", "{B514119B-246A-4E58-98DF-5B6F68D3F218}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CookBook.App", "CookBook.App\CookBook.App.csproj", "{85BAFBCB-47DC-4360-A4B5-8C443BC18711}"
 EndProject

@@ -1,7 +1,7 @@
 ﻿using CookBook.App;
 using Microsoft.Extensions.Configuration;
 
-namespace CookBookAPI.Services
+namespace CookBook.API.Services
 {
     public class ConfigurationService : IConfigurationService
     {

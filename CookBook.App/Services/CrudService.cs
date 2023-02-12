@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -13,7 +14,6 @@ namespace CookBook.App.Services
         private readonly  List<KeyValuePair<string, Type>> _properties;
         private readonly IConfigurationService _configurationService;
         private readonly string _connectionString;
-        private readonly string _genericSchemaName;
         private readonly string _genericTableName;
         private readonly string[] _hidedProps = { "Id", "TableName", "SchemaName" };
         public CrudService(IConfigurationService configurationService)
@@ -21,14 +21,14 @@ namespace CookBook.App.Services
             _properties = InitializeProperties().ToList();
             _configurationService = configurationService;
             _connectionString = _configurationService.GetConnectionString("MSSql");
-            _genericTableName = GetModelInfo<string>("TableName");
-            _genericSchemaName = GetModelInfo<string>("SchemaName");
+            _genericTableName = GetTableName();
+            if (string.IsNullOrEmpty(_genericTableName))
+                throw new InvalidOperationException("T не содержит атрибута TableAttribute!");
         }
 
-        private TProperty GetModelInfo<TProperty>(string propertyName)
+        private string GetTableName()
         {
-            return (TProperty)typeof(T).GetField(propertyName, BindingFlags.Static | BindingFlags.Public)
-                ?.GetValue(null);
+            return typeof(T).GetCustomAttribute<TableAttribute>()?.Name;
         }
 
         private TPropValue GetValueFromInstance<TPropValue>(T instance, string propertyName)
@@ -38,7 +38,7 @@ namespace CookBook.App.Services
         
         private object GetValueFromInstance(T instance, string propertyName, Type type)
         {
-            return type.GetProperty(propertyName)?.GetValue(instance);
+            return typeof(T).GetProperty(propertyName)?.GetValue(instance);
         }
         
         private IEnumerable<KeyValuePair<string, Type>> InitializeProperties()
@@ -51,19 +51,21 @@ namespace CookBook.App.Services
         {
             ExecuteActionInSql(connection =>
             {
-                var expression = new StringBuilder($"INSERT INTO {_genericSchemaName}.{_genericTableName} (");
+                var expression = new StringBuilder($"INSERT INTO {_genericTableName} (");
                 var props = _properties.Where(x => !_hidedProps.Contains(x.Key)).ToList();
                 for (int i = 0; i < props.Count; i++)
                 {
                     expression.Append(props[i].Key);
-                    expression.Append(i == props.Count - 1 ? ")" : ",");
+                    expression.Append(i == props.Count - 1 ? ") " : ",");
                 }
 
                 expression.Append("VALUES (");
-
+                var type = typeof(T);
                 for (int i = 0; i < props.Count; i++)
                 {
-                    expression.Append(props[i].Value.GetProperty(props[i].Key)?.GetValue(entry));
+                    var prop = type.GetProperty(props[i].Key);
+                    var value = Convert.ChangeType(prop?.GetValue(entry), props[i].Value);
+                    expression.Append(props[i].Value == typeof(string) ? $"'{value}'" : value);
                     expression.Append(i == props.Count - 1 ? ")" : ",");
                 }
                 var command = new SqlCommand(expression.ToString(), connection);
@@ -74,7 +76,7 @@ namespace CookBook.App.Services
         public IEnumerable<T> Read()
         {
             // ado.net logic
-            string expression = "SELECT * FROM " + $"{_genericSchemaName}.{_genericTableName}";
+            string expression = "SELECT * FROM " + $"{_genericTableName}";
             var result = new List<T>();
             ExecuteActionInSql(connection =>
             {
@@ -99,7 +101,7 @@ namespace CookBook.App.Services
 
         private void SetValueToInstance(T instance, string propertyName, Type propertyType, object value)
         {
-            var prop = propertyType.GetProperty(propertyName);
+            var prop = typeof(T).GetProperty(propertyName);
             if (prop != null)
             {
                 prop.SetValue(instance, Convert.ChangeType(value, propertyType));
@@ -112,7 +114,7 @@ namespace CookBook.App.Services
             ExecuteActionInSql(connection =>
             {
                 var expression =
-                    $"SELECT * FROM {_genericSchemaName}.{_genericTableName} WHERE Id={GetValueFromInstance<int>(updatedEntry, "Id")}";
+                    $"SELECT * FROM {_genericTableName} WHERE Id={GetValueFromInstance<int>(updatedEntry, "Id")}";
                 var command = new SqlCommand(expression, connection);
                 var reader = command.ExecuteReader();
                 if (!reader.HasRows)
@@ -120,12 +122,15 @@ namespace CookBook.App.Services
                     reader.Dispose();
                     throw new Exception("Запись не найдена!");
                 }
-                var updateExpression = new StringBuilder($"UPDATE {_genericSchemaName}.{_genericTableName} SET ");
+                reader.Close();
+                var updateExpression = new StringBuilder($"UPDATE {_genericTableName} SET ");
                 var props = _properties.Where(x => !_hidedProps.Contains(x.Key)).ToList();
-                for(int i=0; i<props.Count; i++) 
+                for(int i=0; i<props.Count; i++)
                 {
-                    updateExpression.Append($"{props[i].Key}={GetValueFromInstance(updatedEntry, props[i].Key, props[i].Value)}");
-                    updateExpression.Append(i == props.Count - 1 ? "" : ",");
+                    var reflected = GetValueFromInstance(updatedEntry, props[i].Key, props[i].Value);
+                    var value = props[i].Value == typeof(string) ? $"'{reflected}'" : reflected.ToString(); 
+                    updateExpression.Append($"{props[i].Key}={value}");
+                    updateExpression.Append(i == props.Count - 1 ? " " : ",");
                 }
                 updateExpression.Append($"WHERE Id={GetValueFromInstance<int>(updatedEntry, "Id")}");
                 command = new SqlCommand(updateExpression.ToString(), connection);
@@ -139,7 +144,7 @@ namespace CookBook.App.Services
             ExecuteActionInSql(connection =>
             {
                 var expression =
-                    $"SELECT * FROM {_genericSchemaName}.{_genericTableName} WHERE Id={GetValueFromInstance<int>(entry, "Id")}";
+                    $"SELECT * FROM {_genericTableName} WHERE Id={GetValueFromInstance<int>(entry, "Id")}";
                 var command = new SqlCommand(expression, connection);
                 var reader = command.ExecuteReader();
                 if (!reader.HasRows)
@@ -147,7 +152,8 @@ namespace CookBook.App.Services
                     reader.Dispose();
                     throw new Exception("Запись не найдена!");
                 }
-                var updateExpression = new StringBuilder($"DELETE {_genericSchemaName}.{_genericTableName}");
+                reader.Close();
+                var updateExpression = new StringBuilder($"DELETE {_genericTableName} ");
                 updateExpression.Append($"WHERE Id={GetValueFromInstance<int>(entry, "Id")}");
                 command = new SqlCommand(updateExpression.ToString(), connection);
                 command.ExecuteNonQuery();
