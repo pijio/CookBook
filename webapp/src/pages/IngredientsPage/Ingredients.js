@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {fetchIngredients} from "../../redux/actions/ingredients";
+import {fetchIngredients, updateMeasures} from "../../redux/actions/ingredients";
 import styles from './Ingredients.module.css'
 import IngredientRow from "./IngredientsRow";
 import IngredientForm from "./IngredientsForm";
@@ -25,6 +25,8 @@ const Ingredients = () => {
         deleteingredientRequest(ingredient)
         const newItems = ingredientsState.filter(item => item.id !== ingredient.id)
         setIngredientsState(newItems)
+        dispatcher(updateMeasures(newItems))
+
     }
 
     const [addModalState, setAddModalState] = useState(false)
@@ -34,11 +36,14 @@ const Ingredients = () => {
         const newItems = [...ingredientsState, newingredient]
         setIngredientsState(newItems)
         setAddModalState(false)
+        dispatcher(updateMeasures(newItems))
     }
     const editIngredient = (editedingredient) => {
         editingredientRequest(editedingredient)
         const newItems = ingredientsState.map(x => x.id === editedingredient.id ? editedingredient : x)
         setIngredientsState(newItems)
+        dispatcher(updateMeasures(newItems))
+
 
     }
 
