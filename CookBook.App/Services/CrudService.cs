@@ -36,7 +36,7 @@ namespace CookBook.App.Services
             return (TPropValue)typeof(T).GetProperty(propertyName)?.GetValue(instance);
         }
         
-        private object GetValueFromInstance(T instance, string propertyName, Type type)
+        private object GetValueFromInstance(T instance, string propertyName)
         {
             return typeof(T).GetProperty(propertyName)?.GetValue(instance);
         }
@@ -127,7 +127,7 @@ namespace CookBook.App.Services
                 var props = _properties.Where(x => !_hidedProps.Contains(x.Key)).ToList();
                 for(int i=0; i<props.Count; i++)
                 {
-                    var reflected = GetValueFromInstance(updatedEntry, props[i].Key, props[i].Value);
+                    var reflected = GetValueFromInstance(updatedEntry, props[i].Key);
                     var value = props[i].Value == typeof(string) ? $"'{reflected}'" : reflected.ToString(); 
                     updateExpression.Append($"{props[i].Key}={value}");
                     updateExpression.Append(i == props.Count - 1 ? " " : ",");

@@ -1,0 +1,7 @@
+.wrapper {
+    display: flex;
+}
+.content {
+    padding-left: 50px;
+    flex-grow: 1;
+}

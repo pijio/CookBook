@@ -22,27 +22,27 @@ namespace CookBook.API.Controllers
         }
 
         [HttpGet("getMeasures")]
-        public Measure[] GetIngredients()
+        public Measure[] GetMeasures()
         {
             return _crudIngredients.Read().ToArray();
         }
         
         [HttpPost("addMeasures")]
-        public IActionResult CreateIngredients([FromBody] Measure newMeasure)
+        public IActionResult GetMeasure([FromBody] Measure newMeasure)
         {
             _crudIngredients.Create(newMeasure);
             return Ok();
         }
         
         [HttpPut("updateMeasures")]
-        public IActionResult UpdateIngredients([FromBody] Measure existMeasure)
+        public IActionResult UpdateMeasure([FromBody] Measure existMeasure)
         {
             _crudIngredients.Update(existMeasure);
             return Ok();
         }
 
-        [HttpDelete("deleteMeasures")]
-        public IActionResult DeleteIngrediets([FromBody] Measure measure)
+        [HttpPost("deleteMeasures")]
+        public IActionResult DeleteMeasure([FromBody] Measure measure)
         {
             _crudIngredients.Delete(measure);
             return Ok();

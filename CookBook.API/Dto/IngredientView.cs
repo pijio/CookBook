@@ -13,7 +13,7 @@ namespace CookBook.API.Dto
         
         public static explicit operator Ingredient(IngredientView dto)
         {
-            return new Ingredient() { Id = dto.Id, Price = dto.Price, MeasureId = dto.MeasureId };
+            return new Ingredient() { Id = dto.Id, Price = dto.Price, MeasureId = dto.MeasureId, IngredientName = dto.Name};
         }
     }
 }

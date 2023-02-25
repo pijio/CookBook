@@ -52,15 +52,15 @@ namespace CookBook.API.Controllers
             return Ok();
         }
         
-        [HttpPut("updateIngredient")]
+        [HttpPut("updateIngredients")]
         public IActionResult UpdateIngredients([FromBody] IngredientView existIngredient)
         {
             _crudIngredients.Update((Ingredient)existIngredient);
             return Ok();
         }
 
-        [HttpDelete("deleteIngredient")]
-        public IActionResult DeleteIngrediets([FromBody] IngredientView ingredient)
+        [HttpPost("deleteIngredients")]
+        public IActionResult DeleteIngredients([FromBody] IngredientView ingredient)
         {
             _crudIngredients.Delete((Ingredient)ingredient);
             return Ok();
