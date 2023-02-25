@@ -17,7 +17,7 @@ const IngredientsForm = ({ingredient, forUpdateFlag, callback}) => {
         setMeasures(measures);
     }, [measures])
     const [measure, setMeasure] = useState(ingredient ? ingredient.measureId : 1);
-    const formObj = !forUpdateFlag ? {name: " ", price: 0, measureId: measure, measureName: " "} : ingredient;
+    const formObj = !forUpdateFlag ? {name: "", price: 0, measureId: measure, measureName: " "} : ingredient;
     const [obj, setObj] = useState(formObj)
 
     function preCallback(ingredient) {
