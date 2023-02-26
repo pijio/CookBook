@@ -3,6 +3,7 @@ import styles from './CookBook.module.css'
 import Modal from "../../components/UI/Modal/Modal";
 import RecipeIngredientRow from "./RecipeIngredientRow";
 import RecipeIngredientForm from "./RecipeIngredientForm";
+import Dropdown from "../../components/UI/Dropdown/Dropdown";
 
 const Recipe = ({recipe, removeCallback}) => {
     const [addModalState, setAddModalState] = useState(false)
@@ -30,38 +31,40 @@ const Recipe = ({recipe, removeCallback}) => {
     const cb = {addIngredient, deleteIngredient}
 
     return (
-        <div className={styles.recipe}>
-            <h4>Наименование блюда: {recipe.recipeName}</h4>
-            <div className={styles.description}>Комментарии по приготовлению {recipe.recipeComment}</div>
-            <div className={styles.table_wrapper}>
-                <Modal visible={addModalState} setVisible={setAddModalState}>
-                    <RecipeIngredientForm callback={cb.addIngredient}
-                                          forUpdateFlag={false} recipeId={recipe.id}></RecipeIngredientForm>
-                </Modal>
-                <table className={styles.fl_table}>
-                    <thead>
-                    <tr>
-                        <th>Наименование продукта</th>
-                        <th>Количество на 1 блюдо</th>
-                        <th>Действия</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {ingredients.map((ingredient) => (
-                        <RecipeIngredientRow ingredient={ingredient} callbacks={cb} key={ingredient.recipeIngredientId}></RecipeIngredientRow>
-                    ))}
-                    <tr>
-                        <td>...</td>
-                        <td>...</td>
-                        <td>
-                            <button onClick={() => setAddModalState(true)} className={[styles.button, styles.default].join(' ')}>Добавить</button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+        <Dropdown name={recipe.recipeName}>
+            <Modal visible={addModalState} setVisible={setAddModalState}>
+                <RecipeIngredientForm callback={cb.addIngredient}
+                                      forUpdateFlag={false} recipeId={recipe.id}></RecipeIngredientForm>
+            </Modal>
+            <div className={styles.recipe}>
+                <h4>Наименование блюда: {recipe.recipeName}</h4>
+                <div className={styles.description}>Комментарии по приготовлению: {recipe.recipeComment}</div>
+                <div className={styles.table_wrapper}>
+                    <table className={styles.fl_table}>
+                        <thead>
+                        <tr>
+                            <th>Наименование продукта</th>
+                            <th>Количество на 1 блюдо</th>
+                            <th>Действия</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {ingredients.map((ingredient) => (
+                            <RecipeIngredientRow ingredient={ingredient} callbacks={cb} key={ingredient.recipeIngredientId}></RecipeIngredientRow>
+                        ))}
+                        <tr>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>
+                                <button onClick={() => setAddModalState(true)} className={[styles.button, styles.default].join(' ')}>Добавить</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button onClick={() => removeCallback(recipe)} className={[styles.button, styles.red].join(' ')}>Удалить</button>
             </div>
-            <button onClick={() => removeCallback(recipe)} className={[styles.button, styles.red].join(' ')}>Удалить</button>
-        </div>
+        </Dropdown>
     );
 };
 

@@ -1,0 +1,29 @@
+.dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    z-index: 1;
+}
+
+.dropdown-menu {
+    position: absolute;
+    display: block;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid gray;
+    padding: 10px;
+}
+
+.button {
+    width: 400px;
+    height: 50px;
+    background-color: #fff;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    opacity: 0.8;
+    margin-bottom: 30px;
+}
