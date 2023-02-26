@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {fetchMeasures, updateMeasures} from "../../redux/actions/measures";
 import styles from './Measures.module.css'
@@ -6,6 +6,7 @@ import MeasureRow from "./MeasureRow";
 import MeasureForm from "./MeasureForm";
 import Modal from "../../components/UI/Modal/Modal";
 import axios from "axios";
+import {fetchIngredients} from "../../redux/actions/ingredients";
 
 const Measures = () => {
 
@@ -29,14 +30,20 @@ const Measures = () => {
     }
 
     const [addModalState, setAddModalState] = useState(false)
+    const [isUpdating, setIsUpdating] = useState(false);
 
-    const addMeasure = (newMeasure) => {
-        addMeasureRequest(newMeasure)
-        const newItems = [...measureState, newMeasure]
-        setMeasuresState(newItems)
+    useMemo(() => {
+        if(isUpdating) return;
+        dispatcher(fetchMeasures());
+        setMeasuresState(items);
+    }, [isUpdating])
+
+    const addMeasure = async (newMeasure) => {
+        setIsUpdating(true)
+        await addMeasureRequest(newMeasure)
         setAddModalState(false)
-        dispatcher(updateMeasures(newItems));
-
+        dispatcher(updateMeasures(items));
+        setIsUpdating(false)
     }
     const editMeasure = (editedMeasure) => {
         editMeasureRequest(editedMeasure)

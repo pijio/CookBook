@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {fetchIngredients, updateMeasures} from "../../redux/actions/ingredients";
+import {fetchIngredients, updateIngredientsAction, updateMeasures} from "../../redux/actions/ingredients";
 import styles from './Ingredients.module.css'
 import IngredientRow from "./IngredientsRow";
 import IngredientForm from "./IngredientsForm";
@@ -29,14 +29,22 @@ const Ingredients = () => {
 
     }
 
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    useMemo(() => {
+        if(isUpdating) return;
+        dispatcher(fetchIngredients());
+        setIngredientsState(items);
+    }, [isUpdating])
+
     const [addModalState, setAddModalState] = useState(false)
 
-    const addIngredient = (newingredient) => {
-        addingredientRequest(newingredient)
-        const newItems = [...ingredientsState, newingredient]
-        setIngredientsState(newItems)
+    const addIngredient = async (newingredient) => {
+        setIsUpdating(true);
+        await addingredientRequest(newingredient)
+        setIngredientsState(items)
         setAddModalState(false)
-        dispatcher(updateMeasures(newItems))
+        setIsUpdating(false);
     }
     const editIngredient = (editedingredient) => {
         editingredientRequest(editedingredient)
