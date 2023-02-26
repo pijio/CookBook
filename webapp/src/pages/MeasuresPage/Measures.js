@@ -6,7 +6,6 @@ import MeasureRow from "./MeasureRow";
 import MeasureForm from "./MeasureForm";
 import Modal from "../../components/UI/Modal/Modal";
 import axios from "axios";
-import {fetchIngredients} from "../../redux/actions/ingredients";
 
 const Measures = () => {
 

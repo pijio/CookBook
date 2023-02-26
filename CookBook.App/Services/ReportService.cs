@@ -1,0 +1,120 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using ClosedXML.Excel;
+using CookBook.App.Models;
+using Microsoft.Data.SqlClient;
+
+namespace CookBook.App.Services
+{
+    public class ReportService : IReportService
+    {
+        private readonly IConfigurationService _configurationService;
+        public ReportService(IConfigurationService configurationService)
+        {
+            _configurationService = configurationService;
+        }
+        public MemoryStream GetRecipesReport(int portions)
+        {
+            var data = GetReportData(portions).ToList();
+            var interimResults = from row in data
+                group row by row.RecipeName
+                into gr
+                select new { RecipeName = gr.Key, TotalSum = gr.Sum(x => x.TotalPrice) };
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Отчет в разрезе рецептов");
+                worksheet.ColumnWidth = 34;
+                worksheet.Cell(3, 1).Style.Font.Bold = true;
+                worksheet.Cell(3, 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                worksheet.Cell(3, 1).Value = $"Отчет в разрезе рецептов";
+                worksheet.Range(3, 1, 3, 5).Row(1).Merge();
+                var currentRow = 5;
+                foreach (var interimRes in interimResults)
+                {
+                    var ingredients = data.Where(x => x.RecipeName == interimRes.RecipeName);
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                    worksheet.Cell(currentRow, 1).Value = $"{interimRes.RecipeName}";
+                    worksheet.Range(currentRow, 1, currentRow, 5).Row(1).Merge();
+                    currentRow++;
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                    worksheet.Cell(currentRow, 1).Value = $"Наименование ингридиента";
+                    worksheet.Cell(currentRow, 2).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 2).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                    worksheet.Cell(currentRow, 2).Value = $"Количество на {portions} порций";
+                    worksheet.Cell(currentRow, 3).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 3).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                    worksheet.Cell(currentRow, 3).Value = $"Единица измерения ингредиента";
+                    worksheet.Cell(currentRow, 4).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 4).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                    worksheet.Cell(currentRow, 4).Value = $"Символ единицы измерения";
+                    worksheet.Cell(currentRow, 5).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 5).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                    worksheet.Cell(currentRow, 5).Value = $"Стоимость ингридиента на {portions} порций";
+                    currentRow++;
+                    foreach (var ingredient in ingredients)
+                    {
+                        worksheet.Cell(currentRow, 1).Value = ingredient.IngredientName;
+                        worksheet.Cell(currentRow, 2).Value = ingredient.TotalCount;
+                        worksheet.Cell(currentRow, 3).Value = ingredient.MeasureName;
+                        worksheet.Cell(currentRow, 4).Value = ingredient.MeasureSymbol;
+                        worksheet.Cell(currentRow, 5).Value = ingredient.TotalPrice;
+                        currentRow++;
+                    }
+                    worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 1).Value = $"Итого:";
+                    worksheet.Cell(currentRow, 5).Style.Font.Bold = true;
+                    worksheet.Cell(currentRow, 5).Value = $"{interimRes.TotalSum} сом.";
+                    currentRow += 2;
+                }
+
+                var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+                stream.Flush();
+                stream.Position = 0;
+                return stream;
+            }
+        }
+
+        private IEnumerable<RecipesReportRow> GetReportData(int portions)
+        {
+            // название процедуры
+            const string sqlExpression = "RecipesReport";
+
+            using var connection = new SqlConnection(_configurationService.GetConnectionString("MSSql"));
+            connection.Open();
+            var command = new SqlCommand(sqlExpression, connection);
+            command.CommandType = System.Data.CommandType.StoredProcedure;
+            var sqlParams = new SqlParameter
+            {
+                ParameterName = "@Portions",
+                Value = portions
+            };
+            command.Parameters.Add(sqlParams);
+            var result = new List<RecipesReportRow>();
+            var reader = command.ExecuteReader();
+ 
+            if (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    var row = new RecipesReportRow
+                    {
+                        RecipeName = reader.GetString(0),
+                        IngredientName = reader.GetString(1),
+                        TotalCount = reader.GetDecimal(2),
+                        MeasureName = reader.GetString(3),
+                        MeasureSymbol = reader.GetString(4),
+                        TotalPrice = reader.GetDecimal(5)
+                    };
+                    result.Add(row);
+                }
+            }
+            reader.Close();
+            return result.OrderBy(x => x.RecipeName);
+        }
+    }
+}

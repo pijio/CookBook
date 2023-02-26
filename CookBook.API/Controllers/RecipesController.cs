@@ -1,8 +1,13 @@
-﻿using System.Linq;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using CookBook.API.Dto;
 using CookBook.App;
 using CookBook.App.Models;
 using CookBook.App.Models.Interfaces;
+using CookBook.App.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -113,5 +118,13 @@ namespace CookBook.API.Controllers
                 throw new BadHttpRequestException("Рецепт не найден!");
             return result.Id;
         }
+
+        [HttpPost("getReport")]
+        public IActionResult GetReport(int portions, [FromServices] IReportService reportService)
+        {
+            var stream = reportService.GetRecipesReport(portions);
+            var result = new FileStreamResult(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            return result;
+        } 
     }
 }

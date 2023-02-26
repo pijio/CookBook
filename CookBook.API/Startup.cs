@@ -38,6 +38,7 @@ namespace CookBook.API
             }));
             services.AddSingleton<IConfigurationService, ConfigurationService>();
             services.AddScoped(typeof(ICrudService<>), typeof(CrudService<>));
+            services.AddScoped<IReportService, ReportService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
