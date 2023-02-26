@@ -5,6 +5,7 @@ import {fetchRecipes} from "../../redux/actions/cookbook";
 import Recipe from "./Recipe";
 import Modal from "../../components/UI/Modal/Modal";
 import RecipeForm from "./RecipeForm";
+import axios from "axios";
 
 const CookBook = () => {
     const dispatcher = useDispatch();
@@ -19,7 +20,9 @@ const CookBook = () => {
         setRecipes(items);
     }, [items]);
     const [addModal, setAddModal] = useState(false)
-    function addRecipe(recipe) {
+    async function addRecipe(recipe) {
+        const result = await addRecipeRequest(recipe)
+        recipe.id = result;
         const newItems = [...recipes, recipe]
         setRecipes(newItems)
         setAddModal(false)
@@ -27,7 +30,29 @@ const CookBook = () => {
 
     function removeRecipe(deletedRecipe) {
         const newItems = recipes.filter(item => item.recipeName !== deletedRecipe.recipeName)
+        deleteRecipeRequest(deletedRecipe)
         setRecipes(newItems)
+    }
+
+    const addRecipeRequest = async (recipe) => {
+        const data = {
+            recipeName: recipe.recipeName,
+            recipeComment: recipe.recipeComment,
+        };
+
+        try {
+            await axios.post(`https://localhost:5001/api/recipes/addRecipe`, data);
+            const result = await axios.post('https://localhost:5001/api/recipes/getRecipeId', data);
+            return result.data;
+        } catch (error) {
+            console.log(error);
+            throw new Error('Не удалось получить ответ от API');
+        }
+    }
+
+    const deleteRecipeRequest = async (recipe) => {
+        await axios.post(`https://localhost:5001/api/recipes/deleteRecipe`, recipe).then(() => {
+        }).catch(() => console.log('Не удалось получить ответ от API'));
     }
 
     return (

@@ -15,7 +15,7 @@ namespace CookBook.App.Services
         private readonly IConfigurationService _configurationService;
         private readonly string _connectionString;
         private readonly string _genericTableName;
-        private readonly string[] _hidedProps = { "Id", "TableName", "SchemaName" };
+        private readonly string[] _hidedProps = { "Id" };
         public CrudService(IConfigurationService configurationService)
         {
             _properties = InitializeProperties().ToList();
@@ -65,7 +65,15 @@ namespace CookBook.App.Services
                 {
                     var prop = type.GetProperty(props[i].Key);
                     var value = Convert.ChangeType(prop?.GetValue(entry), props[i].Value);
-                    expression.Append(props[i].Value == typeof(string) ? $"'{value}'" : value);
+                    if (props[i].Value == typeof(decimal))
+                    {
+                        value = ((decimal)value).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+                        expression.Append(value);
+                    }
+                    else
+                    {
+                        expression.Append(props[i].Value == typeof(string) ? $"'{value}'" : value);   
+                    }
                     expression.Append(i == props.Count - 1 ? ")" : ",");
                 }
                 var command = new SqlCommand(expression.ToString(), connection);

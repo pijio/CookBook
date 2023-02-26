@@ -4,6 +4,7 @@ using CookBook.App;
 using CookBook.App.Models;
 using CookBook.App.Models.Interfaces;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CookBook.API.Controllers
@@ -42,30 +43,75 @@ namespace CookBook.API.Controllers
                     });
             var recipes = _recipeCrud.Read();
             var recIng = _recIngCrud.Read();
-            var result = recipes.Join(
-                recIng,
-                r => r.Id,
-                ri => ri.RecipeId,
-                (r, ri) => new { Recipe = r, RecIng = ri }
-            ).Join(ingredientViews,
-                rri => rri.RecIng.IngredientId,
-                i => i.Id,
-                (rri, i) => new { rri, IngView = i, rri.RecIng.CountOf, rri.RecIng.Id }
-            ).GroupBy(
-                r => new { r.rri.Recipe.Id, r.rri.Recipe.RecipeName, r.rri.Recipe.RecipeComment },
-                (key, g) =>
-                    new RecipeView
-                    {
-                        Id = key.Id,
-                        RecipeName = key.RecipeName,
-                        RecipeComment = key.RecipeComment,
-                        Ingredients = g.Select(r => new RecipeIngredientView
-                            {   Ingredient = r.IngView, 
-                                CountOf = r.CountOf, 
-                                RecipeIngredientId = r.Id }).ToArray()
-                    }
-            );
+            var result = from r in recipes
+                join ri in recIng on r.Id equals ri.RecipeId into riGroup
+                from ri in riGroup.DefaultIfEmpty()
+                join i in ingredientViews on ri?.IngredientId equals i.Id into iGroup
+                from i in iGroup.DefaultIfEmpty()
+                group new { ri, i } by new { r.Id, r.RecipeName, r.RecipeComment } into g
+                select new RecipeView
+                {
+                    Id = g.Key.Id,
+                    RecipeName = g.Key.RecipeName,
+                    RecipeComment = g.Key.RecipeComment,
+                    Ingredients = g.Where(x => x.i != null)
+                        .Select(x => new RecipeIngredientView
+                        {
+                            Ingredient = x.i,
+                            CountOf = x.ri?.CountOf ?? 0,
+                            RecipeIngredientId = x.ri?.Id ?? 0
+                        })
+                        .ToArray()
+                };
             return result.ToArray();
+        }
+
+        [HttpPost("deleteRecipeIngredient")]
+        public IActionResult DeleteRecipeIngredient([FromBody] RecipeIngredient recipeIngredient)
+        {
+            _recIngCrud.Delete(recipeIngredient);
+            return Ok();
+        }
+        
+        [HttpPost("deleteRecipe")]
+        public IActionResult DeleteRecipe([FromBody] Recipe recipe)
+        {
+            _recipeCrud.Delete(recipe);
+            return Ok();
+        }
+
+        [HttpPost("addRecipeIngredient")]
+        public IActionResult AddRecipeIngredient([FromBody] RecipeIngredient recipeIngredient)
+        {
+            _recIngCrud.Create(recipeIngredient);
+            return Ok();
+        }
+        
+        [HttpPost("getRecipeIngredientId")]
+        public int GetRecipeIngredientId([FromBody] RecipeIngredient recipeIngredient)
+        {
+            var result = _recIngCrud.Read().FirstOrDefault(x =>
+                x.IngredientId == recipeIngredient.IngredientId && x.RecipeId == recipeIngredient.RecipeId);
+            if (result == null)
+                throw new BadHttpRequestException("Ингридиент рецепта не найден!");
+            return result.Id;
+        }
+        
+        [HttpPost("addRecipe")]
+        public IActionResult AddRecipe([FromBody] Recipe recipe)
+        {
+            _recipeCrud.Create(recipe);
+            return Ok();
+        }
+        
+        [HttpPost("getRecipeId")]
+        public int GetRecipeIngredientId([FromBody] Recipe recipe)
+        {
+            var result = _recipeCrud.Read().FirstOrDefault(x =>
+                x.RecipeName == recipe.RecipeName);
+            if (result == null)
+                throw new BadHttpRequestException("Рецепт не найден!");
+            return result.Id;
         }
     }
 }
