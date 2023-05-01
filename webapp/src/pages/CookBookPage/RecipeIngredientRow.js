@@ -1,7 +1,5 @@
 import React, {useState} from 'react';
 import styles from "../IngredientsPage/Ingredients.module.css";
-import Modal from "../../components/UI/Modal/Modal";
-import IngredientsForm from "../IngredientsPage/IngredientsForm";
 
 const RecipeIngredientRow = ({ingredient, callbacks}) => {
     return (

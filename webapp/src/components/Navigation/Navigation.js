@@ -5,6 +5,7 @@ import HomeIcon from './../UI/icons/Home'
 import MeasureIcon from './../UI/icons/Measure'
 import Ingredients from './../UI/icons/Ingredients'
 import Cookbook from './../UI/icons/Cookbook'
+import Order from "./../UI/icons/Order";
 
 const Navigation = () => {
     return (
@@ -25,6 +26,10 @@ const Navigation = () => {
                 <Link to={'/cookbook'} className={styles.nav_item}>
                     <Cookbook/>
                     <span className={styles.a_text}>Книга рецептов</span>
+                </Link>
+                <Link to={'/order'} className={styles.nav_item}>
+                    <Order/>
+                    <span className={styles.a_text}>Заказы</span>
                 </Link>
                 <div className={styles.nav_item_devider}></div>
             </div>

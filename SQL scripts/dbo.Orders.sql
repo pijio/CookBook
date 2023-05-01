@@ -1,0 +1,4 @@
+CREATE TABLE dbo.Orders (
+    Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    OrderDate DATE NOT NULL
+);

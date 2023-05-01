@@ -1,0 +1,5 @@
+CREATE TABLE dbo.Recipes (
+    Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    RecipeName NVARCHAR(255) NOT NULL,
+    RecipeComment NVARCHAR(MAX) NULL
+);

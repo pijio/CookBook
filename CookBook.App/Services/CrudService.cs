@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using CookBook.App.Models.Interfaces;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.Data.SqlClient;
 
 namespace CookBook.App.Services
@@ -47,38 +48,59 @@ namespace CookBook.App.Services
                 .Select(x => new KeyValuePair<string, Type>(x.Name, x.PropertyType));
         }
 
-        public void Create(T entry)
+        public int Create(T entry)
         {
             ExecuteActionInSql(connection =>
             {
-                var expression = new StringBuilder($"INSERT INTO {_genericTableName} (");
+                var expression = new StringBuilder($"INSERT INTO {_genericTableName} ");
                 var props = _properties.Where(x => !_hidedProps.Contains(x.Key)).ToList();
-                for (int i = 0; i < props.Count; i++)
+                if (props.Count == 0)
                 {
-                    expression.Append(props[i].Key);
-                    expression.Append(i == props.Count - 1 ? ") " : ",");
+                    expression.Append("DEFAULT VALUES");
                 }
-
-                expression.Append("VALUES (");
-                var type = typeof(T);
-                for (int i = 0; i < props.Count; i++)
+                else
                 {
-                    var prop = type.GetProperty(props[i].Key);
-                    var value = Convert.ChangeType(prop?.GetValue(entry), props[i].Value);
-                    if (props[i].Value == typeof(decimal))
+                    expression.Append("(");
+                    for (int i = 0; i < props.Count; i++)
                     {
-                        value = ((decimal)value).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
-                        expression.Append(value);
+                        expression.Append(props[i].Key);
+                        expression.Append(i == props.Count - 1 ? ") " : ",");
                     }
-                    else
+                
+                    expression.Append("VALUES (");
+                    var type = typeof(T);
+                    for (int i = 0; i < props.Count; i++)
                     {
-                        expression.Append(props[i].Value == typeof(string) ? $"'{value}'" : value);   
+                        var prop = type.GetProperty(props[i].Key);
+                        var value = Convert.ChangeType(prop?.GetValue(entry), props[i].Value);
+                        if (props[i].Value == typeof(decimal))
+                        {
+                            value = ((decimal)value).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+                            expression.Append(value);
+                        }
+                        else
+                        {
+                            expression.Append(props[i].Value == typeof(string) || props[i].Value == typeof(DateTime) ? $"'{value}'" : value);   
+                        }
+                        expression.Append(i == props.Count - 1 ? ")" : ",");
                     }
-                    expression.Append(i == props.Count - 1 ? ")" : ",");
                 }
                 var command = new SqlCommand(expression.ToString(), connection);
                 command.ExecuteNonQuery();
             });
+
+            var id = 0;
+            ExecuteActionInSql(connection =>
+            {
+                var expression = new StringBuilder($"SELECT IDENT_CURRENT('{_genericTableName}')");
+                var command = new SqlCommand(expression.ToString(), connection);
+                var reader =  command.ExecuteReader();
+                if (reader.HasRows && reader.Read())
+                {
+                    id = Convert.ToInt32(reader[0].ToString());
+                }
+            });
+            return id;
         }
 
         public IEnumerable<T> Read()

@@ -38,7 +38,6 @@ const Recipe = ({recipe, removeCallback}) => {
             ingredientId: recipeIngredient.ingredient.id,
             recipeId: recipeIngredient.recipeId
         };
-        console.log(data)
         try {
             await axios.post(`https://localhost:5001/api/recipes/addRecipeIngredient`, data);
             const result = await axios.post('https://localhost:5001/api/recipes/getRecipeIngredientId', data);

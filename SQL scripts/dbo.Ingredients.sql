@@ -1,0 +1,6 @@
+CREATE TABLE dbo.Ingredients (
+    Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    IngredientName NVARCHAR(255) NOT NULL,
+    MeasureId INT NOT NULL,
+    Price DECIMAL(18,2) NOT NULL
+);
